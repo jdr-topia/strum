@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { AudioLines, ListMusic } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { ProfileMenu } from '@/features/auth/ProfileMenu';
 import { NAV_ITEMS } from './navItems';
 
 /** Desktop (md+) left sidebar. */
@@ -44,6 +45,10 @@ export function Sidebar() {
           No playlists yet
         </div>
       </section>
+
+      <div className="border-t border-border pt-2">
+        <ProfileMenu variant="full" align="start" up />
+      </div>
     </aside>
   );
 }

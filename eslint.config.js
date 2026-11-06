@@ -30,5 +30,10 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // Test helpers aren't hot-reloaded.
+    files: ['src/test/**/*.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
   prettier,
 ]);

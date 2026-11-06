@@ -14,10 +14,14 @@ interface MenuProps {
   trigger: (props: { open: boolean; toggle: () => void }) => ReactNode;
   items: MenuItem[];
   align?: 'start' | 'end';
+  /** Open above the trigger instead of below (e.g. in a footer). */
+  up?: boolean;
+  /** Non-interactive content shown above the items (e.g. account name/email). */
+  header?: ReactNode;
 }
 
 /** Simple dropdown menu. Closes on outside click, Escape, or selection. */
-export function Menu({ trigger, items, align = 'end' }: MenuProps) {
+export function Menu({ trigger, items, align = 'end', up = false, header }: MenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -44,10 +48,16 @@ export function Menu({ trigger, items, align = 'end' }: MenuProps) {
         <ul
           role="menu"
           className={clsx(
-            'absolute z-40 mt-1 min-w-44 rounded-lg border border-border bg-surface-2 p-1 shadow-xl',
+            'absolute z-40 min-w-44 rounded-lg border border-border bg-surface-2 p-1 shadow-xl',
             align === 'end' ? 'right-0' : 'left-0',
+            up ? 'bottom-full mb-1' : 'mt-1',
           )}
         >
+          {header && (
+            <li role="none" className="mb-1 max-w-64 border-b border-border pb-1">
+              {header}
+            </li>
+          )}
           {items.map((item) => (
             <li key={item.label} role="none">
               <button

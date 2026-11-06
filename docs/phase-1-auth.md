@@ -97,7 +97,7 @@ service cloud.firestore {
   }
 }
 ```
-Deployed with `npx firebase deploy --only firestore:rules`.
+Published by pasting `firestore.rules` into Firebase console → Firestore Database → Rules → **Publish** (no CLI — see "As built").
 
 ### 1.6 Rules tests
 Using `@firebase/rules-unit-testing` against the emulator:
@@ -122,3 +122,18 @@ Two ways (documented in the README):
 
 ## You provide
 - List of friends' Google emails (add them yourself to `allowedUsers`, starting with your own).
+
+---
+
+## As built (deviations recorded after Phase 1)
+- **No Firebase CLI / emulators / Admin SDK** (owner decision). Consequences:
+  - **1.5** Rules are published from the console, not `firebase deploy`.
+  - **1.6** No automated rules tests (`@firebase/rules-unit-testing` needs the emulator). The four scenarios become manual owner checks (see the Phase 1 handoff). `firebase-tools` was removed from devDependencies and `npm run emulators` / the `emulators` block in `firebase.json` were deleted.
+  - **1.7** Only the console method for adding friends; no `npm run allow` script. Steps are in `docs/README.md` → "Adding friends".
+- **Extra status `error`:** `useAuth().status` can also be `'error'` when the allowlist check itself fails (e.g. offline on first launch). `RequireAuth` then shows `AccessErrorPage` with **Try again** / **Sign out** instead of wrongly saying "not invited". `useAuth()` also exposes `retry()`.
+- **Unverified email** → treated as `notAllowed` client-side (matches the rules' `email_verified` check).
+- **Profile doc:** created once with `createdAt`; on later sign-ins `displayName`/`photoURL` are synced from Google if they changed. Email stored lowercase.
+- **Sign-in:** popup with `prompt: select_account`; redirect only for an installed iOS PWA or when the popup is blocked (`auth/popup-blocked`, `operation-not-supported-in-environment`, `web-storage-unsupported`). Closing the popup is silent; other errors get a friendly toast.
+- **Profile menu:** desktop = sidebar footer (avatar + name + email, opens upwards); mobile = new slim top bar in `AppLayout` (logo + avatar). `Menu` gained `header` and `up` props.
+- **`/now-playing`** is guarded too (it sits outside `AppLayout` but inside `RequireAuth`).
+- Files: `src/features/auth/` (`AuthProvider`, `AuthContext`, `useAuth`, `authApi`, `authHelpers`, `checkAccess`, `signIn`, `RequireAuth`, `LoginPage`, `NotInvitedPage`, `AccessErrorPage`, `ProfileMenu`, `UserAvatar`), `src/types/user.ts`, `src/components/FullScreenLoader.tsx`, `src/test/fakeAuth.tsx`.

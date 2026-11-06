@@ -96,6 +96,6 @@ VITE_STREAM_QUALITY=128k       # optional: 128k | original
 - **Cloudinary helpers** take an optional config argument (defaults to env) so they can be unit-tested.
 - **Toasts:** Zustand store in `src/components/toastStore.ts` with a `toast.info/success/error()` helper usable outside React; `<Toaster />` is mounted in `App`.
 - **Routing:** routes live in `src/AppRoutes.tsx` (testable with `MemoryRouter`); `App.tsx` wraps them in `BrowserRouter`. `/login` and `/now-playing` render outside the app layout.
-- **Emulators** run with `--project demo-strum` (offline demo project; no login needed). `.firebaserc` default is the real project `strum-5655d` for deploys.
+- **Emulators** ran with `--project demo-strum` in Phase 0. **Removed in Phase 1** by owner decision: no `firebase-tools`, no `npm run emulators`, no `emulators` block in `firebase.json`.
 - **`npm run lint`** runs ESLint and `prettier --check`. Prettier ignores Markdown/docs. An ESLint rule blocks `process.env` in `src/`.
 - `vite-plugin-pwa` is installed but not configured (Phase 5).

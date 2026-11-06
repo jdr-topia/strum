@@ -36,8 +36,8 @@ Read this file fully before doing anything in this repository.
 - **Never** add a backend server. The only server-side code allowed is an *optional, explicitly requested* Firebase Cloud Function (see phase 5 "after launch").
 - **Never** read `process.env` in client code; use `import.meta.env` via `src/config/env.ts`.
 - Keep user data under `users/{uid}/…`. Any data-model change must be reflected in `docs/README.md` **and** `firestore.rules` in the same commit.
-- Every Firestore write path must be allowed by `firestore.rules`; every rules change needs a rules test.
-- Don't deploy (`firebase deploy`) unless the owner asks in this session.
+- Every Firestore write path must be allowed by `firestore.rules`; every rules change must list a manual check for the owner in the handoff (there are no automated rules tests — see below).
+- **No Firebase CLI, emulators or Admin SDK** (owner decision, Phase 1). The client SDK talks to Firebase directly; the owner publishes rules and manages `allowedUsers` in the Firebase console. Don't install `firebase-tools`, `firebase-admin` or `@firebase/rules-unit-testing`.
 - Don't skip git hooks or force-push.
 - Stay within the phase you were asked to do. If you notice something for a later phase, note it in the handoff instead of building it.
 
@@ -51,7 +51,7 @@ Read this file fully before doing anything in this repository.
 - The `<audio>` element lives in `src/features/player/audioEngine.ts`, outside React. Don't create other `Audio` instances for playback.
 - Tailwind for styling; no CSS-in-JS. Mobile-first; test at 375px width.
 - User-facing errors go through the toast system with friendly messages.
-- Tests: Vitest for logic (stores, helpers, tree building, search ranking); `@firebase/rules-unit-testing` against the emulator for rules.
+- Tests: Vitest for logic (stores, helpers, tree building, search ranking) and components (with the fake auth context in `src/test/fakeAuth.tsx`). Firestore rules are verified manually by the owner.
 
 ## Definition of done for a phase
 

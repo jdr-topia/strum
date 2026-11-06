@@ -1,10 +1,57 @@
 rules_version = '2';
 
-// Phase 0 placeholder: deny everything. Real rules arrive in Phase 1 (docs/phase-1-auth.md).
+// Strum — Firestore security rules (docs/phase-1-auth.md, data model in docs/README.md).
+// Publish by pasting this file into Firebase console → Firestore Database → Rules → Publish.
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+
+    function signedIn() { return request.auth != null; }
+    function email()    { return request.auth.token.email.lower(); }
+    function isFriend() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/allowedUsers/$(email()));
+    }
+    function isMe(uid) { return isFriend() && request.auth.uid == uid; }
+
+    // Each user may check only their own allowlist entry. Nobody writes via the client;
+    // the owner adds entries in the Firebase console.
+    match /allowedUsers/{e} {
+      allow get:   if signedIn() && e == email();
+      allow list, write: if false;
+    }
+
+    match /users/{uid} {
+      allow read, write: if isMe(uid);
+
+      match /songs/{songId} {
+        allow read, delete: if isMe(uid);
+        allow create, update: if isMe(uid) && validSong(request.resource.data);
+      }
+      match /playlists/{playlistId} {
+        allow read, delete: if isMe(uid);
+        allow create, update: if isMe(uid) && validPlaylist(request.resource.data);
+      }
+      match /folders/{folderId} {
+        allow read, delete: if isMe(uid);
+        allow create, update: if isMe(uid) && validFolder(request.resource.data);
+      }
+    }
+
+    function validSong(d) {
+      return d.title is string && d.title.size() > 0 && d.title.size() <= 200
+        && d.artist is string && d.artist.size() <= 200
+        && d.cloudinaryPublicId is string
+        && d.audioUrl is string && d.audioUrl.matches('https://res\\.cloudinary\\.com/.*')
+        && d.durationSec is number
+        && d.deleted is bool;
+    }
+    function validPlaylist(d) {
+      return d.name is string && d.name.size() > 0 && d.name.size() <= 100
+        && d.songIds is list && d.songIds.size() <= 5000;
+    }
+    function validFolder(d) {
+      return d.name is string && d.name.size() > 0 && d.name.size() <= 100;
     }
   }
 }

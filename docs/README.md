@@ -158,6 +158,21 @@ strum/
 
 ---
 
+## Adding friends
+
+Only emails in `allowedUsers` can use Strum. There is no admin script — use the console:
+
+1. Firebase console → **Firestore Database** → **Data**.
+2. Collection `allowedUsers` (create it the first time) → **Add document**.
+3. **Document ID** = the friend's Google email, **all lowercase** (e.g. `friend@gmail.com`).
+4. Add a field `addedAt` (type *timestamp*, now) and optionally `note` (string, e.g. "Rahul") → **Save**.
+
+They can sign in straight away. To remove someone, delete their document (their `users/{uid}` data stays until you delete it too).
+
+Security rules live in `firestore.rules`; publish them by pasting the file into **Firestore Database → Rules → Publish**. There is no Firebase CLI in this project.
+
+---
+
 ## Out of scope (possible later additions)
 
 - Cloud Function for real Cloudinary deletion
