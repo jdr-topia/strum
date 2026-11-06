@@ -85,3 +85,17 @@ VITE_STREAM_QUALITY=128k       # optional: 128k | original
 ## You provide
 - Firebase web config, Cloudinary cloud name + preset name.
 - Answers to the decisions table (or accept defaults).
+
+---
+
+## As built (deviations recorded after Phase 0)
+- **Versions:** React 19 (current Vite template) instead of 18; Vite 8; Tailwind 4; TypeScript pinned to `~6.0` because `typescript-eslint` supports only TS < 6.1 (the Vite template now ships TS 7 + oxlint — we kept ESLint as planned).
+- **Tailwind config** is CSS-first: theme tokens (`bg`, `surface`, `surface-2`, `border`, `fg`, `muted`, `accent`, `danger`, spacing `player`/`tabbar`) live in `@theme` in `src/index.css`. There is no `tailwind.config.js`.
+- **Startup:** `main.tsx` validates env with the pure `parseEnv()` first and renders `ConfigErrorScreen` if anything is missing; Firebase (`src/config/firebase.ts`) and `App` are dynamically imported only after validation. `getEnv()` returns the cached, validated config for the rest of the app.
+- **Auth** uses `initializeAuth(app, { persistence: browserLocalPersistence, popupRedirectResolver })` instead of `getAuth()` so persistence is set at creation and popup sign-in is ready for Phase 1.
+- **Cloudinary helpers** take an optional config argument (defaults to env) so they can be unit-tested.
+- **Toasts:** Zustand store in `src/components/toastStore.ts` with a `toast.info/success/error()` helper usable outside React; `<Toaster />` is mounted in `App`.
+- **Routing:** routes live in `src/AppRoutes.tsx` (testable with `MemoryRouter`); `App.tsx` wraps them in `BrowserRouter`. `/login` and `/now-playing` render outside the app layout.
+- **Emulators** run with `--project demo-strum` (offline demo project; no login needed). `.firebaserc` default is the real project `strum-5655d` for deploys.
+- **`npm run lint`** runs ESLint and `prettier --check`. Prettier ignores Markdown/docs. An ESLint rule blocks `process.env` in `src/`.
+- `vite-plugin-pwa` is installed but not configured (Phase 5).

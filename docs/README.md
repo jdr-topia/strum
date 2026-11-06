@@ -55,8 +55,8 @@ Phases are sequential; each one ends with a working, testable app.
 
 | Concern | Choice | Why |
 |---|---|---|
-| Build | Vite + React 18 + TypeScript | Fast, simple, static output |
-| Styling | Tailwind CSS | Quick to build a consistent dark music-app UI |
+| Build | Vite 8 + React 19 + TypeScript 6 | Fast, simple, static output (TS pinned to ~6.0 because typescript-eslint does not support TS 7 yet) |
+| Styling | Tailwind CSS 4 (CSS-first `@theme` tokens in `src/index.css`) | Quick to build a consistent dark music-app UI |
 | Routing | React Router | Standard |
 | Player / UI state | Zustand | Tiny, works outside React render cycle (needed for audio) |
 | Server data | Firestore `onSnapshot` + small custom hooks | Live updates across devices, offline cache |

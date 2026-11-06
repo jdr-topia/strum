@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+
+/*
+ * Strum theme — dark only, emerald accent (decisions #2, #3).
+ * Use these tokens (bg-surface, text-muted, bg-accent, …) instead of raw palette colours.
+ */
+@theme {
+  --color-bg: var(--color-zinc-950);
+  --color-surface: var(--color-zinc-900);
+  --color-surface-2: var(--color-zinc-800);
+  --color-border: var(--color-zinc-800);
+  --color-fg: var(--color-zinc-50);
+  --color-muted: var(--color-zinc-400);
+  --color-accent: var(--color-emerald-500);
+  --color-accent-hover: var(--color-emerald-400);
+  --color-accent-fg: var(--color-zinc-950);
+  --color-danger: var(--color-red-500);
+
+  --spacing-player: 4.5rem;
+  --spacing-tabbar: 3.5rem;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-bg text-fg antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #root {
+    @apply min-h-dvh;
+  }
+}
