@@ -1,6 +1,6 @@
 # Strum — Project Plan
 
-A private music player for a small group of friends. Each user signs in, uploads their own songs, organises them into playlists and folders, and plays them in the browser (installable as a PWA on phones).
+A private music player for a small group of friends. Each user signs in, uploads their own songs, organises them into playlists and folders, and plays them in the browser (installable as a PWA on phones). Users can choose to share single songs with the other friends through **Discover**.
 
 **There is no backend server.** The client talks directly to:
 
@@ -11,7 +11,9 @@ A private music player for a small group of friends. Each user signs in, uploads
 | **Firebase Hosting** | Serving the built static app (not a server) |
 | **Cloudinary (free)** | Storing and streaming audio files and cover art |
 
-Social features (shared songs, public playlists, collaborators, likes, friends' activity) are **out of scope**. Every user's library is private to them.
+Every user's library is **private by default**. The one sharing feature is **public songs**: an owner can make a song public, and then every allowed user can find it in **Discover**, play it, queue it and add it to their own playlists. Only the owner can edit, delete or unshare it. Discover shows the owner's display name (never their email).
+
+Other social features (public playlists, collaborators, likes, comments, friends' activity) are **out of scope**.
 
 ---
 
@@ -69,7 +71,7 @@ Phases are sequential; each one ends with a working, testable app.
 
 ## Data model (Firestore)
 
-All user data lives **under the user's own document**, which makes security rules trivial and keeps libraries private.
+All user data lives **under the user's own document**, which makes security rules trivial and keeps libraries private. The only exception is `publicSongs`, a top-level copy of the songs their owners chose to share.
 
 ```
 allowedUsers/{email}                  ← added by you in the app/console, or by a friend redeeming an invite
@@ -108,7 +110,15 @@ users/{uid}/songs/{songId}
   coverUrl: string | null
   searchKeywords: string[]            ← lowercase tokens from title/artist/album
   deleted: boolean                    ← soft delete (see phase 2)
+  isPublic?: boolean                  ← shared in Discover (missing = false); see publicSongs
   createdAt: timestamp
+
+publicSongs/{songId}                  ← same id as the owner's private song
+  ownerUid: string                    ← only this user can write or delete it
+  ownerName: string                   ← owner's display name when shared ("A friend" if none), ≤ 100
+  title, artist, album, durationSec, cloudinaryPublicId, audioUrl, format, bytes,
+  coverPublicId, coverUrl, searchKeywords, createdAt   ← copied from the private song
+  sharedAt: timestamp                 ← set when made public; Discover sorts by it
 
 users/{uid}/playlists/{playlistId}
   name: string
@@ -126,6 +136,15 @@ users/{uid}/folders/{folderId}
 ```
 
 **Hierarchy:** Folder → Playlists → Songs (Spotify-style). A playlist can sit at the root (`folderId: null`) or inside one folder.
+
+**Public songs (Discover).** Making a song public writes `isPublic: true` on the private song and creates `publicSongs/{songId}` **in one batch**; making it private flips the flag and deletes the copy. The rules only accept a `publicSongs` write when the owner's private song with the same id is public and not deleted after that batch, so the two can't drift apart.
+
+- **Edit** (title, artist, album, cover): the public copy is updated in the same batch.
+- **Soft delete:** the song is also unshared (`isPublic: false`, copy deleted). Restoring does not re-share it.
+- **Hard delete:** the private doc and any leftover copy are deleted together.
+- **Others' playlists** keep the song id. A playlist resolves ids against the user's own library *plus* everyone's public songs, so a song that was deleted or made private simply drops out; the playlist page says "N songs are no longer available" with a **Remove them** button. The same applies to a saved queue.
+- Removing a friend from `allowedUsers` does **not** remove their public songs. Delete their `publicSongs` docs in the console if needed.
+- Cloudinary URLs were already public to anyone who has the link; sharing only makes them findable inside Strum.
 
 ---
 
@@ -157,6 +176,7 @@ strum/
 │  │  ├─ player/               ← audio engine, store, MiniPlayer, NowPlaying, Queue
 │  │  ├─ playlists/            ← playlist list/detail/edit, add-to-playlist dialog
 │  │  ├─ folders/              ← folder tree, folder CRUD
+│  │  ├─ discover/             ← public songs: Discover page, publicSongs reader, helpers
 │  │  └─ search/
 │  ├─ components/              ← shared UI (Button, Modal, Menu, Toast, Cover, …)
 │  ├─ lib/                     ← firestore helpers, formatters, keywords
@@ -198,4 +218,4 @@ Security rules live in `firestore.rules`; publish them by pasting the file into 
 - Lyrics
 - Offline downloads of songs (cache audio in the service worker)
 - Native iOS/Android wrapper via Capacitor
-- Any social/sharing features
+- Social features beyond public songs (public playlists, likes, comments, activity)

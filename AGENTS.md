@@ -7,7 +7,7 @@ Read this file fully before doing anything in this repository.
 **Strum** is a private music player for a small group of friends. Users sign in with Google, upload their own songs, organise them into playlists and folders, and play them in the browser (installable PWA).
 
 - **No backend server.** The client talks directly to Firebase (Auth, Firestore, Hosting) and Cloudinary (audio + cover storage/streaming).
-- **No social features.** Every user's library is private (`users/{uid}/...`).
+- **Private by default.** Every user's library lives under `users/{uid}/...`. The only sharing is **public songs**: an owner can share a song, which is mirrored to top-level `publicSongs/{songId}` and shown to all allowed users in **Discover** (see `docs/README.md` → Data model). No other social features (public playlists, likes, comments, activity).
 - Stack: Vite + React + TypeScript, Tailwind, React Router, Zustand, `music-metadata`, `@dnd-kit`, `vite-plugin-pwa`, Vitest.
 
 ## Where things are
@@ -35,7 +35,7 @@ Read this file fully before doing anything in this repository.
 - **Never** commit `.env.local` or any `.env` file other than `.env.example`.
 - **Never** add a backend server. The only server-side code allowed is an *optional, explicitly requested* Firebase Cloud Function (see phase 5 "after launch").
 - **Never** read `process.env` in client code; use `import.meta.env` via `src/config/env.ts`.
-- Keep user data under `users/{uid}/…`. Any data-model change must be reflected in `docs/README.md` **and** `firestore.rules` in the same commit.
+- Keep user data under `users/{uid}/…` (the one exception is `publicSongs`, which must stay in step with the owner's private song — write both in one batch). Any data-model change must be reflected in `docs/README.md` **and** `firestore.rules` in the same commit.
 - Every Firestore write path must be allowed by `firestore.rules`; every rules change must list a manual check for the owner in the handoff (there are no automated rules tests — see below).
 - **No Firebase CLI, emulators or Admin SDK** (owner decision, Phase 1). The client SDK talks to Firebase directly; the owner publishes rules and manages `allowedUsers` in the Firebase console. Don't install `firebase-tools`, `firebase-admin` or `@firebase/rules-unit-testing`.
 - Don't skip git hooks or force-push.

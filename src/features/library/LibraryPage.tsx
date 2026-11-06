@@ -1,4 +1,4 @@
-import { CheckSquare, Library, ListPlus, Search, Upload, X } from 'lucide-react';
+import { CheckSquare, Globe, Library, ListPlus, Lock, Search, Upload, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/Button';
@@ -10,6 +10,7 @@ import { FolderContents } from '@/features/folders/FolderContents';
 import { LIBRARY_SOURCE, usePlayerStore } from '@/features/player/playerStore';
 import { useSongActions } from './useSongActions';
 import { useDeleteSongs } from './useDeleteSongs';
+import { useSongVisibility } from './useSongVisibility';
 import { SongRow } from './SongRow';
 import { filterSongs, SONG_SORT_LABELS, sortSongs, type SongSort } from './sortSongs';
 import { useSongs } from './useSongs';
@@ -31,7 +32,9 @@ export function LibraryPage() {
   const [sort, setSort] = useState<SongSort>('recent');
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
-  const { deleteSongs, busy } = useDeleteSongs();
+  const { deleteSongs, busy: deleting } = useDeleteSongs();
+  const { setPublic, busy: sharing } = useSongVisibility();
+  const busy = deleting || sharing;
   const actions = useSongActions();
 
   const visible = useMemo(() => sortSongs(filterSongs(songs, query), sort), [songs, query, sort]);
@@ -59,6 +62,14 @@ export function LibraryPage() {
     const ids = [...selected];
     await deleteSongs(ids, ids.length === 1 ? 'Deleted 1 song' : `Deleted ${ids.length} songs`);
     exitSelectMode();
+  };
+
+  const selectedSongs = songs.filter((s) => selected.has(s.id));
+  // "Make public" when any selected song is private; otherwise the batch can only go private.
+  const bulkToPublic = selectedSongs.some((s) => !s.isPublic);
+
+  const shareSelected = async () => {
+    if (await setPublic(selectedSongs, bulkToPublic)) exitSelectMode();
   };
 
   const subtitle = loading
@@ -179,6 +190,18 @@ export function LibraryPage() {
                   Add to playlist
                 </Button>
                 <Button
+                  variant="secondary"
+                  onClick={shareSelected}
+                  disabled={selected.size === 0 || busy}
+                >
+                  {bulkToPublic ? (
+                    <Globe className="size-4" aria-hidden />
+                  ) : (
+                    <Lock className="size-4" aria-hidden />
+                  )}
+                  {bulkToPublic ? 'Make public' : 'Make private'}
+                </Button>
+                <Button
                   variant="danger"
                   onClick={deleteSelected}
                   disabled={selected.size === 0 || busy}
@@ -207,6 +230,7 @@ export function LibraryPage() {
                   onAddToQueue={() => usePlayerStore.getState().addToQueue(song)}
                   onEdit={actions.editSong}
                   onDelete={actions.deleteSong}
+                  onTogglePublic={() => actions.togglePublic(song)}
                   onAddToPlaylist={() => actions.addToPlaylist([song.id])}
                 />
               ))}

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/features/auth/useAuth';
-import { useSongs } from '@/features/library/useSongs';
+import { usePlayableSongs } from '@/features/discover/usePublicSongs';
 import type { Song } from '@/types/song';
 import { loadLastQueue, saveLastQueue } from './playerApi';
 import { loadLocalQueue, saveLocalQueue, type QueueSnapshot } from './playerPersistence';
@@ -12,7 +12,8 @@ const SAVE_INTERVAL_MS = 10_000;
 let lastSavedKey = '';
 
 /**
- * Maps saved song ids onto the live library, so songs deleted since the save are dropped
+ * Maps saved song ids onto the live library (own songs plus friends' public songs), so songs
+ * deleted or made private since the save are dropped
  * and the saved song is still the one selected.
  */
 function resolveSnapshot(
@@ -81,7 +82,8 @@ function saveNow(uid: string): void {
 export function usePlayerLifecycle(): void {
   const { user } = useAuth();
   const uid = user?.uid ?? null;
-  const { songs, loading } = useSongs();
+  // Friends' public songs can be in the queue too (Discover, shared playlist songs).
+  const { songs, loading } = usePlayableSongs();
   const restored = useRef(false);
 
   useEffect(() => {

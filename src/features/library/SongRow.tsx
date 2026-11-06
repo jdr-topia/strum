@@ -2,10 +2,12 @@ import clsx from 'clsx';
 import {
   Check,
   EllipsisVertical,
+  Globe,
   ListEnd,
   ListMusic,
   ListPlus,
   ListX,
+  Lock,
   Pencil,
   Play,
   Trash2,
@@ -29,8 +31,13 @@ export interface SongRowProps {
   onPlay: () => void;
   onPlayNext: () => void;
   onAddToQueue: () => void;
-  onEdit: (song: Song) => void;
-  onDelete: (song: Song) => void;
+  /** Edit and delete are left out for songs the user doesn't own (Discover). */
+  onEdit?: (song: Song) => void;
+  onDelete?: (song: Song) => void;
+  /** Adds "Make public" / "Make private" to the row menu (own songs only). */
+  onTogglePublic?: () => void;
+  /** Extra line after the artist, e.g. "Shared by Rahul" in Discover. */
+  byline?: string;
   /** Adds "Add to playlist" to the row menu. */
   onAddToPlaylist?: () => void;
   /** Adds "Remove from playlist" to the row menu (playlist page only). */
@@ -53,13 +60,17 @@ export function SongRow({
   onAddToQueue,
   onEdit,
   onDelete,
+  onTogglePublic,
+  byline,
   onAddToPlaylist,
   onRemoveFromPlaylist,
   dragHandle,
   rowRef,
   rowStyle,
 }: SongRowProps) {
-  const subtitle = [song.artist, song.album].filter(Boolean).join(' · ');
+  const subtitle = [song.artist, song.album, byline].filter(Boolean).join(' · ');
+  // The globe marks the user's own shared songs; Discover rows are all public, so it's skipped.
+  const showPublicMark = song.isPublic && !song.owner;
 
   const body = (
     <>
@@ -72,8 +83,16 @@ export function SongRow({
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className={clsx('truncate text-sm font-medium', isCurrent && 'text-accent')}>
-          {song.title}
+        <p
+          className={clsx(
+            'flex items-center gap-1.5 text-sm font-medium',
+            isCurrent && 'text-accent',
+          )}
+        >
+          <span className="truncate">{song.title}</span>
+          {showPublicMark && (
+            <Globe className="size-3.5 shrink-0 text-muted" aria-label="Public" role="img" />
+          )}
         </p>
         <p className="truncate text-xs text-muted">{subtitle || '—'}</p>
       </div>
@@ -93,8 +112,17 @@ export function SongRow({
     ...(onRemoveFromPlaylist
       ? [{ label: 'Remove from playlist', icon: <ListX />, onSelect: onRemoveFromPlaylist }]
       : []),
-    { label: 'Edit info', icon: <Pencil />, onSelect: () => onEdit(song) },
-    { label: 'Delete', icon: <Trash2 />, danger: true, onSelect: () => onDelete(song) },
+    ...(onTogglePublic
+      ? [
+          song.isPublic
+            ? { label: 'Make private', icon: <Lock />, onSelect: onTogglePublic }
+            : { label: 'Make public', icon: <Globe />, onSelect: onTogglePublic },
+        ]
+      : []),
+    ...(onEdit ? [{ label: 'Edit info', icon: <Pencil />, onSelect: () => onEdit(song) }] : []),
+    ...(onDelete
+      ? [{ label: 'Delete', icon: <Trash2 />, danger: true, onSelect: () => onDelete(song) }]
+      : []),
   ];
 
   return (

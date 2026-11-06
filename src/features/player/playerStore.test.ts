@@ -43,6 +43,7 @@ const song = (id: string, durationSec = 200): Song =>
     coverUrl: null,
     searchKeywords: [],
     deleted: false,
+    isPublic: false,
     createdAt: null,
   }) as Song;
 

@@ -16,7 +16,7 @@ import { toast } from '@/components/toastStore';
 import { useAuth } from '@/features/auth/useAuth';
 import { useFolders } from '@/features/folders/useFolders';
 import { MoveToDialog } from '@/features/folders/MoveToDialog';
-import { useSongs } from '@/features/library/useSongs';
+import { usePlayableSongs } from '@/features/discover/usePublicSongs';
 import { friendlyError } from '@/lib/errors';
 import type { Playlist } from '@/types/playlist';
 import { deletePlaylist, duplicatePlaylist, movePlaylist, renamePlaylist } from './playlistApi';
@@ -40,7 +40,7 @@ export function PlaylistActionsMenu({
 }: PlaylistActionsMenuProps) {
   const { user } = useAuth();
   const uid = user?.uid ?? null;
-  const { songs: library } = useSongs();
+  const { songs: library } = usePlayableSongs();
   const { folders } = useFolders();
   const [dialog, setDialog] = useState<Dialog | null>(null);
 

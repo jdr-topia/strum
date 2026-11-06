@@ -3,6 +3,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RequireAuth } from '@/features/auth/RequireAuth';
+import { DiscoverPage } from '@/features/discover/DiscoverPage';
 import { FolderPage } from '@/features/folders/FolderPage';
 import { HomePage } from '@/features/home/HomePage';
 import { LibraryPage } from '@/features/library/LibraryPage';
@@ -23,6 +24,7 @@ export function AppRoutes() {
           <Route path="library" element={<LibraryPage />} />
           <Route path="upload" element={<UploadPage />} />
           <Route path="search" element={<SearchPage />} />
+          <Route path="discover" element={<DiscoverPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="playlist/:id" element={<PlaylistPage />} />
           <Route path="folder/:id" element={<FolderPage />} />

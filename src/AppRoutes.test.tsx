@@ -11,6 +11,14 @@ vi.mock('@/features/player/playerApi', () => ({
   saveLastQueue: () => Promise.resolve(),
 }));
 
+// Discover (friends' public songs): none, so Firebase stays out of this test.
+vi.mock('@/features/discover/publicSongApi', () => ({
+  subscribePublicSongs: (onNext: (songs: []) => void) => {
+    onNext([]);
+    return () => undefined;
+  },
+}));
+
 // Keeps Firebase out of this test: the library/upload pages read songs through songApi.
 vi.mock('@/features/library/songApi', () => ({
   subscribeSongs: (_uid: string, _deleted: boolean, onNext: (songs: []) => void) => {
@@ -22,6 +30,7 @@ vi.mock('@/features/library/songApi', () => ({
   softDeleteSongs: () => Promise.resolve(),
   restoreSongs: () => Promise.resolve(),
   hardDeleteSongs: () => Promise.resolve(),
+  setSongsPublic: () => Promise.resolve(),
 }));
 
 // Playlists and folders: one fixture each so the playlist and folder routes have real headings.
@@ -97,6 +106,7 @@ describe('app shell (signed in)', () => {
     ['/library', 'Library'],
     ['/upload', 'Upload'],
     ['/search', 'Search'],
+    ['/discover', 'Discover'],
     ['/playlist/p1', 'Road trip'],
     ['/folder/f1', 'Workout'],
     ['/now-playing', 'Nothing playing'],

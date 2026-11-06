@@ -24,6 +24,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { Spinner } from '@/components/Spinner';
 import { toast } from '@/components/toastStore';
 import { useAuth } from '@/features/auth/useAuth';
+import { isOwnSong, unavailableIds } from '@/features/discover/publicSongs';
+import { usePlayableSongs } from '@/features/discover/usePublicSongs';
 import { useSongs } from '@/features/library/useSongs';
 import { useSongActions } from '@/features/library/useSongActions';
 import { sortSongs, SONG_SORT_LABELS, type SongSort } from '@/features/library/sortSongs';
@@ -59,7 +61,10 @@ export function PlaylistPage() {
   const { user } = useAuth();
   const uid = user?.uid ?? null;
   const { playlists, loading: playlistsLoading } = usePlaylists();
-  const { songs: library, loading: songsLoading } = useSongs();
+  const { songs: library, loading: librarySongsLoading } = useSongs();
+  // Own songs plus friends' public songs: a playlist may hold both.
+  const { songs: playable, loading: playableLoading } = usePlayableSongs();
+  const songsLoading = librarySongsLoading || playableLoading;
   const currentId = usePlayerStore((s) => s.queue[s.index]?.id);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const actions = useSongActions();
@@ -81,8 +86,13 @@ export function PlaylistPage() {
   const songs: Song[] = useMemo(() => {
     if (!playlist) return [];
     const ids = pending && pending.base === playlist.songIds ? pending.order : playlist.songIds;
-    return resolvePlaylistSongs(ids, library);
-  }, [playlist, pending, library]);
+    return resolvePlaylistSongs(ids, playable);
+  }, [playlist, pending, playable]);
+  // Friends' songs that were deleted or made private since they were added.
+  const missingIds = useMemo(
+    () => (playlist ? unavailableIds(playlist.songIds, playable) : []),
+    [playlist, playable],
+  );
   const shown = useMemo(() => (sort === 'custom' ? songs : sortSongs(songs, sort)), [songs, sort]);
   const sortable = sort === 'custom';
 
@@ -127,6 +137,14 @@ export function PlaylistPage() {
     });
   };
 
+  const removeUnavailable = () => {
+    if (!uid || missingIds.length === 0) return;
+    const keep = playlist.songIds.filter((songId) => !missingIds.includes(songId));
+    reorderSongs(uid, playlist.id, keep)
+      .then(() => toast.success('Removed songs that are no longer available'))
+      .catch(() => toast.error("Couldn't update the playlist. Try again."));
+  };
+
   const removeFromPlaylist = (songId: string, title: string) => {
     if (!uid) return;
     removeSong(uid, playlist.id, songId)
@@ -154,6 +172,20 @@ export function PlaylistPage() {
               {songs.length > 0 && ` · ${formatTotalDuration(totalDurationSec(songs))}`}
             </span>
           </p>
+          {missingIds.length > 0 && (
+            <p className="mt-1 text-xs text-muted">
+              {missingIds.length === 1
+                ? '1 song is no longer available (deleted or made private by its owner). '
+                : `${missingIds.length} songs are no longer available (deleted or made private by their owners). `}
+              <button
+                type="button"
+                onClick={removeUnavailable}
+                className="font-medium text-fg underline-offset-4 hover:underline"
+              >
+                Remove {missingIds.length === 1 ? 'it' : 'them'}
+              </button>
+            </p>
+          )}
           {playlist.description ? (
             <p className="mt-2 text-sm text-muted">{playlist.description}</p>
           ) : null}
@@ -239,8 +271,12 @@ export function PlaylistPage() {
                     onPlay={() => usePlayerStore.getState().playList(shown, i, source)}
                     onPlayNext={() => usePlayerStore.getState().playNext(song)}
                     onAddToQueue={() => usePlayerStore.getState().addToQueue(song)}
-                    onEdit={actions.editSong}
-                    onDelete={actions.deleteSong}
+                    onEdit={isOwnSong(song, uid) ? actions.editSong : undefined}
+                    onDelete={isOwnSong(song, uid) ? actions.deleteSong : undefined}
+                    onTogglePublic={
+                      isOwnSong(song, uid) ? () => actions.togglePublic(song) : undefined
+                    }
+                    byline={isOwnSong(song, uid) ? undefined : `Shared by ${song.owner?.name}`}
                     onAddToPlaylist={() => actions.addToPlaylist([song.id])}
                     onRemoveFromPlaylist={() => removeFromPlaylist(song.id, song.title)}
                   />

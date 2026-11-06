@@ -11,6 +11,7 @@ import { PlaylistCard } from '@/features/playlists/PlaylistCard';
 import { resolvePlaylistSongs } from '@/features/playlists/resolvePlaylistSongs';
 import { usePlaylists } from '@/features/playlists/usePlaylists';
 import { useSongActions } from '@/features/library/useSongActions';
+import { usePlayableSongs } from '@/features/discover/usePublicSongs';
 import { useSongs } from '@/features/library/useSongs';
 import type { Playlist } from '@/types/playlist';
 
@@ -22,6 +23,8 @@ const updatedMillis = (p: Playlist) => p.updatedAt?.toMillis() ?? 0;
 export function HomePage() {
   const navigate = useNavigate();
   const { songs: library, loading: songsLoading } = useSongs();
+  // Playlist cards may show friends' public songs too.
+  const { songs: playable } = usePlayableSongs();
   const { playlists } = usePlaylists();
   const actions = useSongActions();
   const currentId = usePlayerStore((s) => s.queue[s.index]?.id);
@@ -132,6 +135,7 @@ export function HomePage() {
                 onAddToQueue={() => usePlayerStore.getState().addToQueue(song)}
                 onEdit={actions.editSong}
                 onDelete={actions.deleteSong}
+                onTogglePublic={() => actions.togglePublic(song)}
                 onAddToPlaylist={() => actions.addToPlaylist([song.id])}
               />
             ))}
@@ -151,7 +155,7 @@ export function HomePage() {
                 <li key={playlist.id}>
                   <PlaylistCard
                     playlist={playlist}
-                    songs={resolvePlaylistSongs(playlist.songIds, library)}
+                    songs={resolvePlaylistSongs(playlist.songIds, playable)}
                   />
                 </li>
               ))}

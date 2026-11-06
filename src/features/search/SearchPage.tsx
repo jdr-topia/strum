@@ -100,6 +100,7 @@ export function SearchPage() {
         onAddToQueue={() => usePlayerStore.getState().addToQueue(song)}
         onEdit={actions.editSong}
         onDelete={actions.deleteSong}
+        onTogglePublic={() => actions.togglePublic(song)}
         onAddToPlaylist={() => actions.addToPlaylist([song.id])}
       />
     ));

@@ -4,6 +4,7 @@ import { Modal } from '@/components/Modal';
 import { toast } from '@/components/toastStore';
 import { uploadToCloudinary } from '@/features/upload/cloudinaryUpload';
 import { useAuth } from '@/features/auth/useAuth';
+import { ownerNameFor } from '@/features/discover/publicSongs';
 import type { Song } from '@/types/song';
 import { updateSongInfo } from './songApi';
 
@@ -17,7 +18,7 @@ const inputClass =
 const labelClass = 'mb-1 block text-xs font-medium text-muted';
 
 /**
- * Edit title/artist/album and optionally replace the cover.
+ * Edit title/artist/album, optionally replace the cover, and share or unshare in Discover.
  * Parent should pass `key={song.id}` so the form resets for each song.
  */
 export function EditSongModal({ song, onClose }: EditSongModalProps) {
@@ -25,6 +26,7 @@ export function EditSongModal({ song, onClose }: EditSongModalProps) {
   const [title, setTitle] = useState(song.title);
   const [artist, setArtist] = useState(song.artist);
   const [album, setAlbum] = useState(song.album ?? '');
+  const [isPublic, setIsPublic] = useState(song.isPublic);
   const [newCover, setNewCover] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,12 +68,13 @@ export function EditSongModal({ song, onClose }: EditSongModalProps) {
         coverPublicId = uploaded.public_id;
         coverUrl = uploaded.secure_url;
       }
-      await updateSongInfo(user.uid, song.id, {
+      await updateSongInfo({ uid: user.uid, name: ownerNameFor(user) }, song, {
         title: cleanTitle,
         artist: artist.trim() || 'Unknown Artist',
         album: album.trim() || null,
         coverPublicId,
         coverUrl,
+        isPublic,
       });
       toast.success('Song updated');
       onClose();
@@ -143,6 +146,22 @@ export function EditSongModal({ song, onClose }: EditSongModalProps) {
         <label className="block">
           <span className={labelClass}>Album</span>
           <input className={inputClass} value={album} onChange={(e) => setAlbum(e.target.value)} />
+        </label>
+
+        <label className="flex items-start gap-3 rounded-lg border border-border bg-surface-2 p-3">
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 accent-accent"
+          />
+          <span className="min-w-0">
+            <span className="block text-sm font-medium">Public</span>
+            <span className="block text-xs text-muted">
+              Friends on Strum can find and play it in Discover, and add it to their playlists. They
+              see your name, not your email.
+            </span>
+          </span>
         </label>
 
         {error && (

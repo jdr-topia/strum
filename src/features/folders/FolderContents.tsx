@@ -5,7 +5,7 @@ import { Spinner } from '@/components/Spinner';
 import { PlaylistCard } from '@/features/playlists/PlaylistCard';
 import { resolvePlaylistSongs } from '@/features/playlists/resolvePlaylistSongs';
 import { usePlaylists } from '@/features/playlists/usePlaylists';
-import { useSongs } from '@/features/library/useSongs';
+import { usePlayableSongs } from '@/features/discover/usePublicSongs';
 import { FolderCard } from './FolderCard';
 import { NewItemMenu } from './NewItemMenu';
 import { useFolders } from './useFolders';
@@ -19,7 +19,7 @@ interface FolderContentsProps {
 export function FolderContents({ folderId }: FolderContentsProps) {
   const { folders, loading: foldersLoading } = useFolders();
   const { playlists, loading: playlistsLoading } = usePlaylists();
-  const { songs: library, loading: songsLoading } = useSongs();
+  const { songs: library, loading: songsLoading } = usePlayableSongs();
 
   const childFolders = useMemo(
     () =>
