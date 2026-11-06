@@ -11,7 +11,7 @@ import { UploadReviewRow } from './UploadReviewRow';
 import { useUploadStore, type UploadEdit } from './uploadStore';
 
 const inputClass =
-  'h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-2.5 text-sm outline-none focus:border-accent';
+  'h-9 min-w-0 flex-1 basis-36 rounded-md border border-border bg-surface px-2.5 text-sm outline-none focus:border-accent';
 
 export function UploadPage() {
   const { user } = useAuth();

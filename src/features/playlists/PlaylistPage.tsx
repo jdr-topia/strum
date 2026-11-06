@@ -145,7 +145,9 @@ export function PlaylistPage() {
         />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold tracking-wider text-muted uppercase">Playlist</p>
-          <h1 className="mt-1 truncate text-3xl font-bold md:text-4xl">{playlist.name}</h1>
+          <h1 className="mt-1 line-clamp-2 text-3xl font-bold break-words md:line-clamp-none md:truncate md:text-4xl">
+            {playlist.name}
+          </h1>
           <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
             <span>
               {songs.length} {songs.length === 1 ? 'song' : 'songs'}

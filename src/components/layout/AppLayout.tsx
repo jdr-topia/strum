@@ -18,7 +18,8 @@ export function AppLayout() {
   usePlayerKeyboard();
   return (
     <div className="flex h-dvh">
-      <div className="flex min-h-0 flex-1 md:pb-player">
+      {/* min-w-0: without it, long nowrap titles widen the page past the phone screen. */}
+      <div className="flex min-h-0 min-w-0 flex-1 md:pb-player">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="flex items-center justify-between border-b border-border px-4 pt-[env(safe-area-inset-top)] md:hidden">

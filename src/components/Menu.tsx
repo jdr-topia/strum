@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 export interface MenuItem {
   label: string;
@@ -20,10 +20,32 @@ interface MenuProps {
   header?: ReactNode;
 }
 
-/** Simple dropdown menu. Closes on outside click, Escape, or selection. */
+/** Space kept clear at the bottom: mobile tab bar + mini-player, or the desktop player bar. */
+function bottomChromePx(): number {
+  const desktop = window.matchMedia?.('(min-width: 48rem)').matches ?? false;
+  return desktop ? 80 : 136;
+}
+
+/**
+ * Simple dropdown menu. Closes on outside click, Escape, or selection.
+ * Opens upwards when there isn't room below (e.g. the last rows above the mobile player).
+ */
 export function Menu({ trigger, items, align = 'end', up = false, header }: MenuProps) {
   const [open, setOpen] = useState(false);
+  const [flip, setFlip] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  useLayoutEffect(() => {
+    if (!open || up) return;
+    const list = listRef.current;
+    const root = rootRef.current;
+    if (!list || !root) return;
+    const below = window.innerHeight - bottomChromePx() - root.getBoundingClientRect().bottom;
+    const above = root.getBoundingClientRect().top;
+    const needed = list.offsetHeight + 4;
+    setFlip(needed > below && above > below);
+  }, [open, up]);
 
   useEffect(() => {
     if (!open) return;
@@ -43,14 +65,21 @@ export function Menu({ trigger, items, align = 'end', up = false, header }: Menu
 
   return (
     <div ref={rootRef} className="relative inline-block">
-      {trigger({ open, toggle: () => setOpen((o) => !o) })}
+      {trigger({
+        open,
+        toggle: () => {
+          setFlip(false);
+          setOpen((o) => !o);
+        },
+      })}
       {open && (
         <ul
+          ref={listRef}
           role="menu"
           className={clsx(
             'absolute z-40 min-w-44 rounded-lg border border-border bg-surface-2 p-1 shadow-xl',
             align === 'end' ? 'right-0' : 'left-0',
-            up ? 'bottom-full mb-1' : 'mt-1',
+            up || flip ? 'bottom-full mb-1' : 'mt-1',
           )}
         >
           {header && (
