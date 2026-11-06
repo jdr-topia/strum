@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { toast } from '@/components/toastStore';
-import { extractMetadata } from './extractMetadata';
+import { extractMetadata, titleFromFileName, UNKNOWN_ARTIST } from './extractMetadata';
 import { uploadSong, SAVE_FAILED_MESSAGE } from './uploadSong';
 import { validateAudioFile } from './validateFile';
 
@@ -18,6 +18,8 @@ export interface UploadItem {
   status: UploadStatus;
   progress: number;
   error: string | null;
+  /** True while tags are being read. The row shows at once; it can't be uploaded until this is false. */
+  reading: boolean;
 }
 
 export type UploadEdit = Partial<Pick<UploadItem, 'title' | 'artist' | 'album'>>;
@@ -29,10 +31,13 @@ interface UploadState {
   items: UploadItem[];
   /** Set by startAll; the queue needs it to upload. */
   uid: string | null;
-  /** Validates, reads tags and adds reviewable items. Invalid files get a toast. */
+  /**
+   * Validates files and adds a row for each straight away (filename as the title).
+   * Tags are read in the background and fill the rows in when ready.
+   */
   addFiles: (files: File[], maxMb: number) => Promise<void>;
   updateItem: (id: string, edit: UploadEdit) => void;
-  /** Sets artist and/or album on every item that hasn't started. */
+  /** Sets artist and/or album on every item that is ready and hasn't started. */
   applyToPending: (edit: Pick<UploadEdit, 'artist' | 'album'>) => void;
   removeItem: (id: string) => void;
   startAll: (uid: string) => void;
@@ -49,6 +54,9 @@ let nextId = 1;
 const revokePreview = (item: UploadItem | undefined) => {
   if (item?.coverPreviewUrl) URL.revokeObjectURL(item.coverPreviewUrl);
 };
+
+/** Ready to upload: waiting, and its tags have been read. */
+const isReadyToUpload = (i: UploadItem) => i.status === 'pending' && !i.reading;
 
 export const useUploadStore = create<UploadState>((set, get) => {
   const patch = (id: string, change: Partial<UploadItem>) =>
@@ -101,17 +109,17 @@ export const useUploadStore = create<UploadState>((set, get) => {
       });
   }
 
-  /** Starts pending items until CONCURRENCY uploads are running. */
+  /** Starts ready items until CONCURRENCY uploads are running. */
   function pump() {
     const { uid, items } = get();
     if (!uid) return;
 
     for (const item of items) {
       if (inFlight.size >= UPLOAD_CONCURRENCY) break;
-      if (item.status === 'pending' && !inFlight.has(item.id)) run(item, uid);
+      if (isReadyToUpload(item) && !inFlight.has(item.id)) run(item, uid);
     }
 
-    if (inFlight.size === 0 && !get().items.some((i) => i.status === 'pending')) {
+    if (inFlight.size === 0 && !get().items.some(isReadyToUpload)) {
       if (completedInBatch > 0) {
         toast.success(
           completedInBatch === 1
@@ -121,6 +129,24 @@ export const useUploadStore = create<UploadState>((set, get) => {
         completedInBatch = 0;
       }
     }
+  }
+
+  /** Reads tags for one row and fills it in. Quietly skips rows removed while reading. */
+  async function readTags(item: UploadItem) {
+    const meta = await extractMetadata(item.file);
+    const stillThere = get().items.some((i) => i.id === item.id);
+    if (!stillThere) return;
+    patch(item.id, {
+      title: meta.title,
+      artist: meta.artist,
+      album: meta.album ?? '',
+      durationSec: meta.durationSec,
+      cover: meta.cover,
+      coverPreviewUrl: meta.cover ? URL.createObjectURL(meta.cover) : null,
+      reading: false,
+    });
+    // An upload batch may already be running and waiting for this row.
+    if (get().uid) pump();
   }
 
   return {
@@ -136,33 +162,31 @@ export const useUploadStore = create<UploadState>((set, get) => {
       }
       if (valid.length === 0) return;
 
-      const metas = await Promise.all(valid.map((file) => extractMetadata(file)));
-      const newItems: UploadItem[] = valid.map((file, i) => {
-        const meta = metas[i];
-        return {
-          id: `up-${nextId++}`,
-          file,
-          title: meta.title,
-          artist: meta.artist,
-          album: meta.album ?? '',
-          durationSec: meta.durationSec,
-          cover: meta.cover,
-          coverPreviewUrl: meta.cover ? URL.createObjectURL(meta.cover) : null,
-          status: 'pending',
-          progress: 0,
-          error: null,
-        };
-      });
+      const newItems: UploadItem[] = valid.map((file) => ({
+        id: `up-${nextId++}`,
+        file,
+        title: titleFromFileName(file.name),
+        artist: UNKNOWN_ARTIST,
+        album: '',
+        durationSec: 0,
+        cover: null,
+        coverPreviewUrl: null,
+        status: 'pending',
+        progress: 0,
+        error: null,
+        reading: true,
+      }));
       set((s) => ({ items: [...s.items, ...newItems] }));
-      // If an upload batch is already running, new files join the queue straight away.
-      if (get().uid) pump();
+
+      // Each file reads its own tags; one slow file doesn't hold up the others.
+      for (const item of newItems) void readTags(item);
     },
 
     updateItem: (id, edit) => patch(id, edit),
 
     applyToPending: (edit) =>
       set((s) => ({
-        items: s.items.map((i) => (i.status === 'pending' ? { ...i, ...edit } : i)),
+        items: s.items.map((i) => (isReadyToUpload(i) ? { ...i, ...edit } : i)),
       })),
 
     removeItem: (id) => removeById(id),

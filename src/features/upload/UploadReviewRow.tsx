@@ -25,7 +25,7 @@ export function UploadReviewRow({
   onRemove,
   onRetry,
 }: UploadReviewRowProps) {
-  const editable = item.status === 'pending';
+  const editable = item.status === 'pending' && !item.reading;
   const duplicate = editable
     ? findDuplicate(
         { title: item.title, artist: item.artist, durationSec: item.durationSec },
@@ -89,6 +89,7 @@ export function UploadReviewRow({
 }
 
 function StatusLine({ item, onRetry }: { item: UploadItem; onRetry: (id: string) => void }) {
+  if (item.reading) return <p className="text-xs text-muted">Reading tags…</p>;
   switch (item.status) {
     case 'pending':
       return <p className="text-xs text-muted">Ready to upload</p>;

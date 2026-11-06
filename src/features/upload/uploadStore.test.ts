@@ -8,7 +8,8 @@ vi.mock('./uploadSong', () => ({
   SAVE_FAILED_MESSAGE: "Couldn't save the song to your library. Please try again.",
 }));
 
-vi.mock('./extractMetadata', () => ({
+vi.mock('./extractMetadata', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./extractMetadata')>()),
   extractMetadata: vi.fn(async () => ({
     title: 'Song',
     artist: 'Artist',
@@ -35,6 +36,12 @@ const flush = () => new Promise((r) => setTimeout(r, 0));
 
 const store = () => useUploadStore.getState();
 
+/** Adds files, then waits for the background tag reads to finish. */
+const addFiles = async (files: File[], maxMb = 50) => {
+  await store().addFiles(files, maxMb);
+  await flush();
+};
+
 beforeEach(() => {
   useUploadStore.setState({ items: [], uid: null });
   useToastStore.setState({ toasts: [] });
@@ -44,14 +51,14 @@ beforeEach(() => {
 
 describe('uploadStore', () => {
   it('rejects non-audio files with a toast and keeps the valid ones', async () => {
-    await store().addFiles([new File(['x'], 'a.png', { type: 'image/png' }), mp3('a.mp3')], 50);
+    await addFiles([new File(['x'], 'a.png', { type: 'image/png' }), mp3('a.mp3')], 50);
 
     expect(store().items.map((i) => i.file.name)).toEqual(['a.mp3']);
     expect(useToastStore.getState().toasts[0].message).toMatch(/isn't an audio file/);
   });
 
   it('reads tags into editable items', async () => {
-    await store().addFiles([mp3('a.mp3')], 50);
+    await addFiles([mp3('a.mp3')], 50);
     expect(store().items[0]).toMatchObject({ title: 'Song', artist: 'Artist', durationSec: 120 });
   });
 
@@ -60,7 +67,7 @@ describe('uploadStore', () => {
     let n = 0;
     vi.mocked(uploadSong).mockImplementation(() => calls[n++].promise);
 
-    await store().addFiles([mp3('1.mp3'), mp3('2.mp3'), mp3('3.mp3')], 50);
+    await addFiles([mp3('1.mp3'), mp3('2.mp3'), mp3('3.mp3')], 50);
     store().startAll('u1');
     expect(uploadSong).toHaveBeenCalledTimes(UPLOAD_CONCURRENCY);
 
@@ -76,7 +83,7 @@ describe('uploadStore', () => {
 
   it('marks a failed song as error and can retry it', async () => {
     vi.mocked(uploadSong).mockRejectedValueOnce(new Error('Network problem.'));
-    await store().addFiles([mp3('a.mp3')], 50);
+    await addFiles([mp3('a.mp3')], 50);
     store().startAll('u1');
     await flush();
 
@@ -90,7 +97,7 @@ describe('uploadStore', () => {
   });
 
   it('removes a pending item without uploading it', async () => {
-    await store().addFiles([mp3('a.mp3')], 50);
+    await addFiles([mp3('a.mp3')], 50);
     const id = store().items[0].id;
     store().removeItem(id);
     store().startAll('u1');
@@ -100,13 +107,13 @@ describe('uploadStore', () => {
   });
 
   it('applies artist/album only to items that have not started', async () => {
-    await store().addFiles([mp3('a.mp3')], 50);
+    await addFiles([mp3('a.mp3')], 50);
     store().applyToPending({ artist: 'Shared', album: 'Album X' });
     expect(store().items[0]).toMatchObject({ artist: 'Shared', album: 'Album X' });
   });
 
   it('clearFinished keeps unfinished items', async () => {
-    await store().addFiles([mp3('a.mp3'), mp3('b.mp3')], 50);
+    await addFiles([mp3('a.mp3'), mp3('b.mp3')], 50);
     store().updateItem(store().items[0].id, {});
     useUploadStore.setState((s) => ({
       items: s.items.map((i, idx) => (idx === 0 ? { ...i, status: 'done' as const } : i)),

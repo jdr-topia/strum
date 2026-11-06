@@ -36,9 +36,21 @@ export function metadataFromParsed(
   };
 }
 
-/** Reads duration via a temporary <audio> element when the parser couldn't. */
+/** Longest we wait for tags or duration before using filename defaults. Uploads never wait on this. */
+export const READ_TIMEOUT_MS = 8000;
+
+/** Resolves with `fallback` if `work` takes longer than `ms`. Never rejects. */
+export function withTimeout<T>(work: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<T>((resolve) => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  return Promise.race([work.catch(() => fallback), timeout]).finally(() => clearTimeout(timer));
+}
+
+/** Reads duration via a temporary <audio> element when the parser couldn't. 0 on failure or timeout. */
 export function durationFromAudioElement(file: Blob): Promise<number> {
-  return new Promise((resolve) => {
+  const read = new Promise<number>((resolve) => {
     const url = URL.createObjectURL(file);
     const audio = new Audio();
     const done = (value: number) => {
@@ -50,23 +62,34 @@ export function durationFromAudioElement(file: Blob): Promise<number> {
     audio.onerror = () => done(0);
     audio.src = url;
   });
+  return withTimeout(read, READ_TIMEOUT_MS, 0);
 }
 
-/** Reads tags from a file in the browser. Never throws: unreadable files get filename defaults. */
+function fallbackMetadata(file: File): ExtractedMetadata {
+  return {
+    title: titleFromFileName(file.name),
+    artist: UNKNOWN_ARTIST,
+    album: null,
+    durationSec: 0,
+    cover: null,
+  };
+}
+
+/**
+ * Reads tags from a file in the browser. Never throws, and never waits longer than
+ * READ_TIMEOUT_MS per step: unreadable or slow files get filename defaults.
+ */
 export async function extractMetadata(file: File): Promise<ExtractedMetadata> {
-  try {
-    const { parseBlob } = await import('music-metadata');
-    const parsed = await parseBlob(file, { duration: true, skipCovers: false });
-    const meta = metadataFromParsed(parsed, file.name);
-    if (meta.durationSec === 0) meta.durationSec = await durationFromAudioElement(file);
-    return meta;
-  } catch {
-    return {
-      title: titleFromFileName(file.name),
-      artist: UNKNOWN_ARTIST,
-      album: null,
-      durationSec: await durationFromAudioElement(file),
-      cover: null,
-    };
-  }
+  const parsed = await withTimeout(
+    import('music-metadata').then(({ parseBlob }) =>
+      parseBlob(file, { duration: true, skipCovers: false }),
+    ),
+    READ_TIMEOUT_MS,
+    null,
+  );
+  if (!parsed) return fallbackMetadata(file);
+
+  const meta = metadataFromParsed(parsed, file.name);
+  if (meta.durationSec === 0) meta.durationSec = await durationFromAudioElement(file);
+  return meta;
 }

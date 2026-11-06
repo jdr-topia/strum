@@ -30,7 +30,7 @@ export function UploadPage() {
   const [sharedArtist, setSharedArtist] = useState('');
   const [sharedAlbum, setSharedAlbum] = useState('');
 
-  const pending = items.filter((i) => i.status === 'pending').length;
+  const pending = items.filter((i) => i.status === 'pending' && !i.reading).length;
   const done = items.filter((i) => i.status === 'done').length;
   const uploading = items.some((i) => i.status === 'uploading' || i.status === 'saving');
   const overall = items.length
