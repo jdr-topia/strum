@@ -72,9 +72,21 @@ Phases are sequential; each one ends with a working, testable app.
 All user data lives **under the user's own document**, which makes security rules trivial and keeps libraries private.
 
 ```
-allowedUsers/{email}                  ← you add these by hand in the console
+allowedUsers/{email}                  ← added by you in the app/console, or by a friend redeeming an invite
   addedAt: timestamp
   note?: string                       ← e.g. "Rahul"
+  inviteCode?: string                 ← set when the friend joined with an invite
+
+admins/{email}                        ← added once by hand in the console (the owner)
+  addedAt: timestamp
+
+invites/{code}                        ← the code (12 characters) is the document id
+  createdBy: string                   ← admin's email
+  createdAt: timestamp
+  expiresAt: timestamp
+  maxUses: number                     ← 1–50
+  uses: number                        ← +1 for each friend who joins with it
+  note: string                        ← e.g. "Rahul", up to 100 characters
 
 users/{uid}
   displayName: string
@@ -160,14 +172,21 @@ strum/
 
 ## Adding friends
 
-Only emails in `allowedUsers` can use Strum. There is no admin script — use the console:
+Only emails in `allowedUsers` can use Strum. There are two ways to add someone, and no admin script:
 
-1. Firebase console → **Firestore Database** → **Data**.
-2. Collection `allowedUsers` (create it the first time) → **Add document**.
-3. **Document ID** = the friend's Google email, **all lowercase** (e.g. `friend@gmail.com`).
-4. Add a field `addedAt` (type *timestamp*, now) and optionally `note` (string, e.g. "Rahul") → **Save**.
+**Invite codes (normal way).** Admins have an **Invites** section in **Settings**:
 
-They can sign in straight away. To remove someone, delete their document (their `users/{uid}` data stays until you delete it too).
+1. Choose who it's for (optional note), how many people can use it (1, 5 or 10) and how long it lasts (1, 7 or 30 days) → **Create invite**.
+2. Send the code to your friend. They sign in with Google, and on the "not on the list" screen they enter the code under "Have an invite code?".
+3. They're added to `allowedUsers` straight away, and the invite's `uses` goes up by one.
+
+Revoke an invite from the same section to stop it working. Friends who already joined keep access.
+
+**Manual (console).** Firebase console → **Firestore Database** → **Data** → collection `allowedUsers` → **Add document**. Document ID = the friend's Google email, **all lowercase**. Add `addedAt` (timestamp) and optionally `note`.
+
+**Removing a friend:** Settings → **Friends** → **Remove**. It takes effect straight away. Their `users/{uid}` data and songs stay in the database.
+
+**Becoming an admin (one time).** Add a document to collection `admins`, with ID = your Google email in lowercase and a field `addedAt` (timestamp). Until this exists, the Invites and Friends sections don't appear, but everything else works.
 
 Security rules live in `firestore.rules`; publish them by pasting the file into **Firestore Database → Rules → Publish**. There is no Firebase CLI in this project.
 

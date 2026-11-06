@@ -1,5 +1,6 @@
 import { MailX } from 'lucide-react';
 import { Button } from '@/components/Button';
+import { RedeemInviteForm } from '@/features/invites/RedeemInviteForm';
 import { useAuth } from './useAuth';
 
 export function NotInvitedPage() {
@@ -19,9 +20,10 @@ export function NotInvitedPage() {
               yet.
             </>
           )}{' '}
-          Ask the owner to add you, or sign in with a different Google account.
+          Enter an invite code from a friend, or sign in with a different Google account.
         </p>
       </div>
+      <RedeemInviteForm />
       <Button variant="secondary" onClick={() => void signOut()}>
         Sign out
       </Button>

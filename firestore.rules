@@ -7,18 +7,49 @@ service cloud.firestore {
 
     function signedIn() { return request.auth != null; }
     function email()    { return request.auth.token.email.lower(); }
+    function verified() { return signedIn() && request.auth.token.email_verified == true; }
     function isFriend() {
-      return signedIn()
-        && request.auth.token.email_verified == true
+      return verified()
         && exists(/databases/$(database)/documents/allowedUsers/$(email()));
+    }
+    function isAdmin() {
+      return verified()
+        && exists(/databases/$(database)/documents/admins/$(email()));
     }
     function isMe(uid) { return isFriend() && request.auth.uid == uid; }
 
-    // Each user may check only their own allowlist entry. Nobody writes via the client;
-    // the owner adds entries in the Firebase console.
-    match /allowedUsers/{e} {
+    // Admins: one doc per owner, added by hand in the console (docs/README.md → Invites).
+    // Nobody can list or write it from the client.
+    match /admins/{e} {
       allow get:   if signedIn() && e == email();
       allow list, write: if false;
+    }
+
+    // Friend allowlist. A user may check their own entry. Admins can list and remove friends.
+    // Friends join in two ways: an admin adds the entry, or a verified user redeems an invite
+    // by creating their own entry that points at a live invite code.
+    match /allowedUsers/{e} {
+      allow get:    if signedIn() && e == email();
+      allow list, delete: if isAdmin();
+      allow create: if isAdmin()
+        || (verified() && e == email() && validRedemption(request.resource.data));
+      allow update: if false;
+    }
+
+    // Invite codes. Only admins create or list them. Anyone signed in with a verified email can
+    // read one invite by its exact code (codes are random and long, so they can't be guessed).
+    // Redeeming may only increment `uses`; the expiry and limit can't be changed.
+    match /invites/{code} {
+      allow get:    if verified();
+      allow list, delete: if isAdmin();
+      allow create: if isAdmin()
+        && validInvite(request.resource.data)
+        && request.resource.data.createdBy == email();
+      allow update: if verified()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uses'])
+        && request.resource.data.uses == resource.data.uses + 1
+        && resource.data.uses < resource.data.maxUses
+        && resource.data.expiresAt > request.time;
     }
 
     match /users/{uid} {
@@ -52,6 +83,23 @@ service cloud.firestore {
     }
     function validFolder(d) {
       return d.name is string && d.name.size() > 0 && d.name.size() <= 100;
+    }
+    function validInvite(d) {
+      return d.createdBy is string
+        && d.createdAt is timestamp
+        && d.expiresAt is timestamp
+        && d.maxUses is int && d.maxUses >= 1 && d.maxUses <= 50
+        && d.uses == 0
+        && d.note is string && d.note.size() <= 100;
+    }
+    // A redemption must name a live invite (not expired, uses left) and carry the timestamp.
+    function validRedemption(d) {
+      return d.inviteCode is string
+        && d.addedAt is timestamp
+        && exists(/databases/$(database)/documents/invites/$(d.inviteCode))
+        && get(/databases/$(database)/documents/invites/$(d.inviteCode)).data.expiresAt > request.time
+        && get(/databases/$(database)/documents/invites/$(d.inviteCode)).data.uses
+             < get(/databases/$(database)/documents/invites/$(d.inviteCode)).data.maxUses;
     }
   }
 }

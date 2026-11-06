@@ -64,6 +64,23 @@ vi.mock('@/features/folders/folderApi', () => ({
   deleteFolder: () => Promise.resolve(),
 }));
 
+// Invites: admin checks and lists are stubbed; the forms are only rendered on demand.
+vi.mock('@/features/invites/inviteApi', () => ({
+  isEmailAdmin: () => Promise.resolve(false),
+  createInvite: () => Promise.resolve('ABCDEFGHJKLM'),
+  subscribeInvites: (onNext: (i: unknown[]) => void) => {
+    onNext([]);
+    return () => undefined;
+  },
+  subscribeFriends: (onNext: (f: unknown[]) => void) => {
+    onNext([]);
+    return () => undefined;
+  },
+  redeemInvite: () => Promise.resolve(),
+  revokeInvite: () => Promise.resolve(),
+  removeFriend: () => Promise.resolve(),
+}));
+
 function renderAt(path: string, auth: AuthContextValue = fakeAuth()) {
   return render(
     <FakeAuthProvider value={auth}>
