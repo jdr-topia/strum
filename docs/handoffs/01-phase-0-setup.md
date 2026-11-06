@@ -41,7 +41,7 @@
 - Git warns about LF→CRLF conversion (`core.autocrlf`); harmless. A `.gitattributes` could pin LF if wanted.
 
 ## Owner action needed
-- **`.env.example` contains your real config values (uncommitted change).** During this session the real values were written into `.env.example` instead of `.env.local`. A copy of them is now in `.env.local` (git-ignored) and the app uses it. Restore the template with `git checkout -- .env.example` so it isn't committed by accident.
+- **`.env.example` contains your real config values (uncommitted change).** During this session the real values were written into `.env.example` instead of `.env.local`. A copy of them is now in `.env.local` (git-ignored) and the app uses it. The owner chose to keep it that way. **Agents: never stage `.env.example` while it shows as modified** (no `git add -A` / `git add .` without unstaging it).
 - Decisions table: defaults were used (Strum, dark only, emerald, 50 MB, 128 kbps, one level of nesting, many playlists per song, mixed devices, npm). Tell the next agent if any should change.
 - Phase 1 needs: Google sign-in enabled in Firebase Auth, Firestore created, and the `allowedUsers/{email}` docs for you and your friends (see `docs/phase-1-auth.md`).
 
