@@ -1,13 +1,24 @@
 import clsx from 'clsx';
-import { Check, EllipsisVertical, ListEnd, ListPlus, Pencil, Play, Trash2 } from 'lucide-react';
+import {
+  Check,
+  EllipsisVertical,
+  ListEnd,
+  ListMusic,
+  ListPlus,
+  ListX,
+  Pencil,
+  Play,
+  Trash2,
+} from 'lucide-react';
+import type { CSSProperties, ReactNode, Ref } from 'react';
 import { Cover } from '@/components/Cover';
 import { IconButton } from '@/components/IconButton';
-import { Menu } from '@/components/Menu';
+import { Menu, type MenuItem } from '@/components/Menu';
 import { PlayingBars } from '@/features/player/PlayingBars';
 import { formatDuration } from '@/lib/formatters';
 import type { Song } from '@/types/song';
 
-interface SongRowProps {
+export interface SongRowProps {
   song: Song;
   selectMode: boolean;
   selected: boolean;
@@ -20,6 +31,14 @@ interface SongRowProps {
   onAddToQueue: () => void;
   onEdit: (song: Song) => void;
   onDelete: (song: Song) => void;
+  /** Adds "Add to playlist" to the row menu. */
+  onAddToPlaylist?: () => void;
+  /** Adds "Remove from playlist" to the row menu (playlist page only). */
+  onRemoveFromPlaylist?: () => void;
+  /** Shown before the cover, e.g. a drag handle on the playlist page. */
+  dragHandle?: ReactNode;
+  rowRef?: Ref<HTMLLIElement>;
+  rowStyle?: CSSProperties;
 }
 
 export function SongRow({
@@ -34,6 +53,11 @@ export function SongRow({
   onAddToQueue,
   onEdit,
   onDelete,
+  onAddToPlaylist,
+  onRemoveFromPlaylist,
+  dragHandle,
+  rowRef,
+  rowStyle,
 }: SongRowProps) {
   const subtitle = [song.artist, song.album].filter(Boolean).join(' · ');
 
@@ -59,13 +83,31 @@ export function SongRow({
     </>
   );
 
+  const items: MenuItem[] = [
+    { label: 'Play', icon: <Play />, onSelect: onPlay },
+    { label: 'Play next', icon: <ListEnd />, onSelect: onPlayNext },
+    { label: 'Add to queue', icon: <ListPlus />, onSelect: onAddToQueue },
+    ...(onAddToPlaylist
+      ? [{ label: 'Add to playlist', icon: <ListMusic />, onSelect: onAddToPlaylist }]
+      : []),
+    ...(onRemoveFromPlaylist
+      ? [{ label: 'Remove from playlist', icon: <ListX />, onSelect: onRemoveFromPlaylist }]
+      : []),
+    { label: 'Edit info', icon: <Pencil />, onSelect: () => onEdit(song) },
+    { label: 'Delete', icon: <Trash2 />, danger: true, onSelect: () => onDelete(song) },
+  ];
+
   return (
     <li
+      ref={rowRef}
+      style={rowStyle}
       className={clsx(
         'flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-surface-2',
         (selected || isCurrent) && 'bg-surface-2',
       )}
     >
+      {dragHandle}
+
       {selectMode ? (
         <button
           type="button"
@@ -108,13 +150,7 @@ export function SongRow({
               aria-haspopup="menu"
             />
           )}
-          items={[
-            { label: 'Play', icon: <Play />, onSelect: onPlay },
-            { label: 'Play next', icon: <ListEnd />, onSelect: onPlayNext },
-            { label: 'Add to queue', icon: <ListPlus />, onSelect: onAddToQueue },
-            { label: 'Edit info', icon: <Pencil />, onSelect: () => onEdit(song) },
-            { label: 'Delete', icon: <Trash2 />, danger: true, onSelect: () => onDelete(song) },
-          ]}
+          items={items}
         />
       )}
     </li>

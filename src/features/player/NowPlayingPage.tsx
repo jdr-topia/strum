@@ -1,7 +1,9 @@
-import { ChevronDown, ListMusic } from 'lucide-react';
+import { ChevronDown, ListMusic, ListPlus } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cover } from '@/components/Cover';
 import { IconButton } from '@/components/IconButton';
+import { AddToPlaylistDialog } from '@/features/playlists/AddToPlaylistDialog';
 import { PlaybackControls } from './PlaybackControls';
 import { SeekBar } from './SeekBar';
 import { usePlayerStore } from './playerStore';
@@ -13,6 +15,7 @@ export function NowPlayingPage() {
   const source = usePlayerStore((s) => s.source);
   const needsTap = usePlayerStore((s) => s.needsTap);
   const setQueueOpen = usePlayerStore((s) => s.setQueueOpen);
+  const [addingToPlaylist, setAddingToPlaylist] = useState(false);
 
   return (
     <main className="flex min-h-dvh flex-col gap-6 px-6 pt-[max(env(safe-area-inset-top),1rem)] pb-[max(env(safe-area-inset-bottom),1.5rem)]">
@@ -25,11 +28,19 @@ export function NowPlayingPage() {
         <p className="text-xs font-semibold tracking-wider text-muted uppercase">
           {source ? `Playing from ${source.name}` : 'Now playing'}
         </p>
-        <IconButton
-          label="Show queue"
-          icon={<ListMusic className="size-5" />}
-          onClick={() => setQueueOpen(true)}
-        />
+        <div className="flex items-center">
+          <IconButton
+            label="Add to playlist"
+            icon={<ListPlus className="size-5" />}
+            disabled={!song}
+            onClick={() => setAddingToPlaylist(true)}
+          />
+          <IconButton
+            label="Show queue"
+            icon={<ListMusic className="size-5" />}
+            onClick={() => setQueueOpen(true)}
+          />
+        </div>
       </div>
 
       <Cover
@@ -61,6 +72,10 @@ export function NowPlayingPage() {
         <SeekBar />
         <PlaybackControls size="lg" />
       </div>
+
+      {addingToPlaylist && song && (
+        <AddToPlaylistDialog songIds={[song.id]} onClose={() => setAddingToPlaylist(false)} />
+      )}
     </main>
   );
 }

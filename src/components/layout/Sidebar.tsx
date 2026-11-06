@@ -1,7 +1,8 @@
 import clsx from 'clsx';
-import { AudioLines, ListMusic } from 'lucide-react';
+import { AudioLines } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { ProfileMenu } from '@/features/auth/ProfileMenu';
+import { SidebarPlaylists } from '@/features/playlists/SidebarPlaylists';
 import { UploadBadge } from '@/features/upload/UploadBadge';
 import { NAV_ITEMS } from './navItems';
 
@@ -37,16 +38,7 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      <section className="mt-4 flex min-h-0 flex-1 flex-col border-t border-border pt-4">
-        <h2 className="px-3 pb-2 text-xs font-semibold tracking-wider text-muted uppercase">
-          Playlists
-        </h2>
-        {/* Folder/playlist tree arrives in Phase 4. */}
-        <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted">
-          <ListMusic className="size-4" aria-hidden />
-          No playlists yet
-        </div>
-      </section>
+      <SidebarPlaylists />
 
       <div className="border-t border-border pt-2">
         <ProfileMenu variant="full" align="start" up />

@@ -24,6 +24,46 @@ vi.mock('@/features/library/songApi', () => ({
   hardDeleteSongs: () => Promise.resolve(),
 }));
 
+// Playlists and folders: one fixture each so the playlist and folder routes have real headings.
+vi.mock('@/features/playlists/playlistApi', () => ({
+  subscribePlaylists: (_uid: string, onNext: (p: unknown[]) => void) => {
+    onNext([
+      {
+        id: 'p1',
+        name: 'Road trip',
+        description: null,
+        coverUrl: null,
+        folderId: null,
+        songIds: [],
+        createdAt: null,
+        updatedAt: null,
+      },
+    ]);
+    return () => undefined;
+  },
+  addSongs: () => Promise.resolve(),
+  createPlaylist: () => Promise.resolve(''),
+  renamePlaylist: () => Promise.resolve(),
+  setDescription: () => Promise.resolve(),
+  removeSong: () => Promise.resolve(),
+  reorderSongs: () => Promise.resolve(),
+  movePlaylist: () => Promise.resolve(),
+  deletePlaylist: () => Promise.resolve(),
+  duplicatePlaylist: () => Promise.resolve(''),
+}));
+
+vi.mock('@/features/folders/folderApi', () => ({
+  subscribeFolders: (_uid: string, onNext: (f: unknown[]) => void) => {
+    onNext([{ id: 'f1', name: 'Workout', parentId: null, order: 0, createdAt: null }]);
+    return () => undefined;
+  },
+  createFolder: () => Promise.resolve(''),
+  renameFolder: () => Promise.resolve(),
+  moveFolder: () => Promise.resolve(),
+  reorderFolders: () => Promise.resolve(),
+  deleteFolder: () => Promise.resolve(),
+}));
+
 function renderAt(path: string, auth: AuthContextValue = fakeAuth()) {
   return render(
     <FakeAuthProvider value={auth}>
@@ -40,8 +80,8 @@ describe('app shell (signed in)', () => {
     ['/library', 'Library'],
     ['/upload', 'Upload'],
     ['/search', 'Search'],
-    ['/playlist/p1', 'Playlist'],
-    ['/folder/f1', 'Folder'],
+    ['/playlist/p1', 'Road trip'],
+    ['/folder/f1', 'Workout'],
     ['/now-playing', 'Nothing playing'],
     ['/nope', 'Page not found'],
   ])('renders %s', (path, heading) => {

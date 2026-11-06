@@ -17,3 +17,13 @@ export function formatBytes(bytes: number): string {
   if (kb < 1024) return `${kb.toFixed(0)} KB`;
   return `${(kb / 1024).toFixed(1)} MB`;
 }
+
+/** 2700 → "45 min", 7500 → "2 hr 5 min". Used for playlist totals. */
+export function formatTotalDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '—';
+  const totalMin = Math.round(seconds / 60);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h === 0) return `${m} min`;
+  return m === 0 ? `${h} hr` : `${h} hr ${m} min`;
+}

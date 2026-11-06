@@ -29,6 +29,23 @@ const { softDeleteSongs, sampleSongs } = vi.hoisted(() => {
   };
 });
 
+// Playlists and folders are not used by these tests; empty lists keep Firebase out of them.
+vi.mock('@/features/playlists/playlistApi', () => ({
+  subscribePlaylists: (_uid: string, onNext: (p: unknown[]) => void) => {
+    onNext([]);
+    return () => undefined;
+  },
+  addSongs: () => Promise.resolve(),
+  createPlaylist: () => Promise.resolve(''),
+}));
+
+vi.mock('@/features/folders/folderApi', () => ({
+  subscribeFolders: (_uid: string, onNext: (f: unknown[]) => void) => {
+    onNext([]);
+    return () => undefined;
+  },
+}));
+
 // Keeps Firebase out of the test; the page only needs the live list and the delete call.
 vi.mock('./songApi', () => ({
   subscribeSongs: (_uid: string, _deleted: boolean, onNext: (songs: Song[]) => void) => {

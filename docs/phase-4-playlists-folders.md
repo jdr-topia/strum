@@ -96,3 +96,12 @@ Non-social, built from the user's own data:
 
 ## You provide
 - Nothing new.
+
+## Deviations (as built, phase 4)
+- **Sidebar drag and drop deferred.** Moving a playlist or folder is done with the `⋯` menu → "Move to…". Dragging playlists onto folders in the sidebar, and reordering folders in the UI, are not built. `reorderFolders` exists in `folderApi.ts` but nothing calls it yet.
+- **Custom playlist cover deferred.** Playlists show a mosaic of their first four song covers. `setCover` (Cloudinary upload) is not built. `coverUrl` is read if present.
+- **Sort "Recently added" omitted** on the playlist page. Songs carry no per-playlist timestamp, so the order is always custom, title, artist or album.
+- **Folder nesting** is enforced in the client only (`folderTree.ts`). `firestore.rules` does not check depth.
+- **Library tabs and browse views use URL parameters** (`/library?view=playlists`, `/search?q=…&artist=…` or `&album=…`), so they can be linked and go back.
+- **Shuffle play** turns shuffle on for the player. Plain Play keeps the current shuffle setting.
+- **Search** shows the first 50 songs and 8 of each group. There is no paging.
