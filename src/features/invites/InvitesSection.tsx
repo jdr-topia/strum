@@ -2,6 +2,7 @@ import { Copy, Ticket, Trash2 } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { Button } from '@/components/Button';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { Select } from '@/components/Select';
 import { toast } from '@/components/toastStore';
 import { friendlyError } from '@/lib/errors';
 import type { Invite } from '@/types/invite';
@@ -107,31 +108,23 @@ export function InvitesSection({ adminEmail }: { adminEmail: string }) {
         </label>
         <label>
           <span className="mb-1 block text-xs font-medium text-muted">Uses</span>
-          <select
-            value={maxUses}
-            onChange={(e) => setMaxUses(Number(e.target.value))}
-            className={inputClass}
-          >
+          <Select value={maxUses} onChange={(e) => setMaxUses(Number(e.target.value))}>
             {USES.map((n) => (
               <option key={n} value={n}>
                 {n === 1 ? '1 person' : `Up to ${n}`}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <label>
           <span className="mb-1 block text-xs font-medium text-muted">Valid for</span>
-          <select
-            value={days}
-            onChange={(e) => setDays(Number(e.target.value))}
-            className={inputClass}
-          >
+          <Select value={days} onChange={(e) => setDays(Number(e.target.value))}>
             {DAYS.map((d) => (
               <option key={d} value={d}>
                 {d === 1 ? '1 day' : `${d} days`}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <Button type="submit" disabled={busy}>
           Create invite

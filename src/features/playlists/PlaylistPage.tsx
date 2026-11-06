@@ -18,6 +18,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
+import { Select } from '@/components/Select';
 import { NamePromptModal } from '@/components/NamePromptModal';
 import { PageHeader } from '@/components/PageHeader';
 import { Spinner } from '@/components/Spinner';
@@ -45,9 +46,6 @@ const TRACK_SORT_LABELS: Record<TrackSort, string> = {
   custom: 'Custom order',
   ...SONG_SORT_LABELS,
 };
-
-const selectClass =
-  'h-10 rounded-full border border-border bg-surface-2 px-3 text-sm outline-none focus:border-accent';
 
 /** A drag that is still being saved: shown until the playlist's own song list changes. */
 interface PendingOrder {
@@ -207,17 +205,13 @@ export function PlaylistPage() {
           <div className="mb-2 flex items-center justify-between gap-2">
             <label className="flex items-center gap-2 text-sm text-muted">
               <span>Sort</span>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as TrackSort)}
-                className={selectClass}
-              >
+              <Select pill value={sort} onChange={(e) => setSort(e.target.value as TrackSort)}>
                 {(Object.keys(TRACK_SORT_LABELS) as TrackSort[]).map((key) => (
                   <option key={key} value={key}>
                     {TRACK_SORT_LABELS[key]}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             {!sortable && (
               <span className="text-xs text-muted">Switch to custom order to reorder songs</span>

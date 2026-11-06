@@ -33,4 +33,14 @@
   #root {
     @apply min-h-dvh;
   }
+
+  /* Native dropdown lists: browsers draw them from these colours, so set them to the theme. */
+  select {
+    color-scheme: dark;
+  }
+
+  option {
+    background-color: var(--color-surface);
+    color: var(--color-fg);
+  }
 }

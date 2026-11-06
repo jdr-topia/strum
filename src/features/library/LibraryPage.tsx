@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
+import { Select } from '@/components/Select';
 import { PageHeader } from '@/components/PageHeader';
 import { Spinner } from '@/components/Spinner';
 import { FolderContents } from '@/features/folders/FolderContents';
@@ -149,17 +150,13 @@ export function LibraryPage() {
             </label>
             <label>
               <span className="sr-only">Sort by</span>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SongSort)}
-                className={`${inputClass} px-3`}
-              >
+              <Select pill value={sort} onChange={(e) => setSort(e.target.value as SongSort)}>
                 {(Object.keys(SONG_SORT_LABELS) as SongSort[]).map((key) => (
                   <option key={key} value={key}>
                     {SONG_SORT_LABELS[key]}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           </div>
 
