@@ -203,16 +203,19 @@ export function PlaylistPage() {
       ) : (
         <div className="px-4 pb-6 md:px-8">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <label className="flex items-center gap-2 text-sm text-muted">
+            <div className="flex items-center gap-2 text-sm text-muted">
               <span>Sort</span>
-              <Select pill value={sort} onChange={(e) => setSort(e.target.value as TrackSort)}>
-                {(Object.keys(TRACK_SORT_LABELS) as TrackSort[]).map((key) => (
-                  <option key={key} value={key}>
-                    {TRACK_SORT_LABELS[key]}
-                  </option>
-                ))}
-              </Select>
-            </label>
+              <Select
+                pill
+                label="Sort tracks"
+                value={sort}
+                onChange={setSort}
+                options={(Object.keys(TRACK_SORT_LABELS) as TrackSort[]).map((key) => ({
+                  value: key,
+                  label: TRACK_SORT_LABELS[key],
+                }))}
+              />
+            </div>
             {!sortable && (
               <span className="text-xs text-muted">Switch to custom order to reorder songs</span>
             )}

@@ -148,16 +148,16 @@ export function LibraryPage() {
                 className={`${inputClass} w-full pr-4 pl-9`}
               />
             </label>
-            <label>
-              <span className="sr-only">Sort by</span>
-              <Select pill value={sort} onChange={(e) => setSort(e.target.value as SongSort)}>
-                {(Object.keys(SONG_SORT_LABELS) as SongSort[]).map((key) => (
-                  <option key={key} value={key}>
-                    {SONG_SORT_LABELS[key]}
-                  </option>
-                ))}
-              </Select>
-            </label>
+            <Select
+              pill
+              label="Sort by"
+              value={sort}
+              onChange={setSort}
+              options={(Object.keys(SONG_SORT_LABELS) as SongSort[]).map((key) => ({
+                value: key,
+                label: SONG_SORT_LABELS[key],
+              }))}
+            />
           </div>
 
           {selectMode && (

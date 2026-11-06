@@ -106,26 +106,24 @@ export function InvitesSection({ adminEmail }: { adminEmail: string }) {
             className={`${inputClass} w-full`}
           />
         </label>
-        <label>
+        <div>
           <span className="mb-1 block text-xs font-medium text-muted">Uses</span>
-          <Select value={maxUses} onChange={(e) => setMaxUses(Number(e.target.value))}>
-            {USES.map((n) => (
-              <option key={n} value={n}>
-                {n === 1 ? '1 person' : `Up to ${n}`}
-              </option>
-            ))}
-          </Select>
-        </label>
-        <label>
+          <Select
+            label="Uses"
+            value={maxUses}
+            onChange={setMaxUses}
+            options={USES.map((n) => ({ value: n, label: n === 1 ? '1 person' : `Up to ${n}` }))}
+          />
+        </div>
+        <div>
           <span className="mb-1 block text-xs font-medium text-muted">Valid for</span>
-          <Select value={days} onChange={(e) => setDays(Number(e.target.value))}>
-            {DAYS.map((d) => (
-              <option key={d} value={d}>
-                {d === 1 ? '1 day' : `${d} days`}
-              </option>
-            ))}
-          </Select>
-        </label>
+          <Select
+            label="Valid for"
+            value={days}
+            onChange={setDays}
+            options={DAYS.map((d) => ({ value: d, label: d === 1 ? '1 day' : `${d} days` }))}
+          />
+        </div>
         <Button type="submit" disabled={busy}>
           Create invite
         </Button>
