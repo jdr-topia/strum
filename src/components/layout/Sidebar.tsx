@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { AudioLines, ListMusic } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { ProfileMenu } from '@/features/auth/ProfileMenu';
+import { UploadBadge } from '@/features/upload/UploadBadge';
 import { NAV_ITEMS } from './navItems';
 
 /** Desktop (md+) left sidebar. */
@@ -29,6 +30,7 @@ export function Sidebar() {
               >
                 <Icon className="size-5" aria-hidden />
                 {label}
+                {to === '/upload' && <UploadBadge className="ml-auto" />}
               </NavLink>
             </li>
           ))}

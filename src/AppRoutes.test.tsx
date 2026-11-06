@@ -1,10 +1,23 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { AppRoutes } from './AppRoutes';
 import { ConfigErrorScreen } from '@/components/ConfigErrorScreen';
 import type { AuthContextValue } from '@/features/auth/AuthContext';
 import { FakeAuthProvider, fakeAuth } from '@/test/fakeAuth';
+
+// Keeps Firebase out of this test: the library/upload pages read songs through songApi.
+vi.mock('@/features/library/songApi', () => ({
+  subscribeSongs: (_uid: string, _deleted: boolean, onNext: (songs: []) => void) => {
+    onNext([]);
+    return () => undefined;
+  },
+  addSong: () => Promise.resolve(''),
+  updateSongInfo: () => Promise.resolve(),
+  softDeleteSongs: () => Promise.resolve(),
+  restoreSongs: () => Promise.resolve(),
+  hardDeleteSongs: () => Promise.resolve(),
+}));
 
 function renderAt(path: string, auth: AuthContextValue = fakeAuth()) {
   return render(

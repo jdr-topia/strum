@@ -34,6 +34,18 @@ export function Toaster() {
           >
             <Icon className={clsx('mt-0.5 size-4 shrink-0', colors[t.kind])} aria-hidden />
             <p className="flex-1">{t.message}</p>
+            {t.action && (
+              <button
+                type="button"
+                onClick={() => {
+                  t.action?.onClick();
+                  dismiss(t.id);
+                }}
+                className="font-semibold text-accent hover:underline"
+              >
+                {t.action.label}
+              </button>
+            )}
             <button
               type="button"
               aria-label="Dismiss"

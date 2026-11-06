@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import { NavLink } from 'react-router-dom';
+import { UploadBadge } from '@/features/upload/UploadBadge';
 import { NAV_ITEMS } from './navItems';
 
 /** Mobile (<md) bottom tab bar. */
@@ -22,7 +23,12 @@ export function BottomTabBar() {
                 )
               }
             >
-              <Icon className="size-5" aria-hidden />
+              <span className="relative">
+                <Icon className="size-5" aria-hidden />
+                {to === '/upload' && (
+                  <UploadBadge className="absolute -top-1.5 -right-3 size-5 min-w-0 px-0 text-[10px]" />
+                )}
+              </span>
               {label}
             </NavLink>
           </li>

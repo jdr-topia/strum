@@ -1,5 +1,6 @@
 import clsx from 'clsx';
-import { LogOut } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Menu } from '@/components/Menu';
 import { useAuth } from './useAuth';
 import { UserAvatar } from './UserAvatar';
@@ -14,6 +15,7 @@ interface ProfileMenuProps {
 
 export function ProfileMenu({ variant = 'compact', align = 'end', up = false }: ProfileMenuProps) {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   if (!user) return null;
 
   const name = user.displayName ?? user.email ?? 'You';
@@ -28,7 +30,10 @@ export function ProfileMenu({ variant = 'compact', align = 'end', up = false }: 
           {user.email && <p className="truncate text-xs text-muted">{user.email}</p>}
         </div>
       }
-      items={[{ label: 'Sign out', icon: <LogOut />, onSelect: () => void signOut() }]}
+      items={[
+        { label: 'Settings', icon: <Settings />, onSelect: () => navigate('/settings') },
+        { label: 'Sign out', icon: <LogOut />, onSelect: () => void signOut() },
+      ]}
       trigger={({ open, toggle }) => (
         <button
           type="button"
