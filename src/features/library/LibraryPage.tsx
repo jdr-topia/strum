@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Spinner } from '@/components/Spinner';
 import { toast } from '@/components/toastStore';
 import { useAuth } from '@/features/auth/useAuth';
+import { LIBRARY_SOURCE, usePlayerStore } from '@/features/player/playerStore';
 import type { Song } from '@/types/song';
 import { EditSongModal } from './EditSongModal';
 import { restoreSongs, softDeleteSongs } from './songApi';
@@ -21,6 +22,8 @@ export function LibraryPage() {
   const { user } = useAuth();
   const uid = user?.uid ?? null;
   const { songs, loading, error } = useSongs();
+  const currentId = usePlayerStore((s) => s.queue[s.index]?.id);
+  const isPlaying = usePlayerStore((s) => s.isPlaying);
 
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SongSort>('recent');
@@ -177,13 +180,18 @@ export function LibraryPage() {
             <p className="py-10 text-center text-sm text-muted">No songs match “{query}”.</p>
           ) : (
             <ul className="space-y-0.5 pb-4">
-              {visible.map((song) => (
+              {visible.map((song, i) => (
                 <SongRow
                   key={song.id}
                   song={song}
                   selectMode={selectMode}
                   selected={selected.has(song.id)}
+                  isCurrent={song.id === currentId}
+                  isPlaying={isPlaying}
                   onToggleSelected={toggleSelected}
+                  onPlay={() => usePlayerStore.getState().playList(visible, i, LIBRARY_SOURCE)}
+                  onPlayNext={() => usePlayerStore.getState().playNext(song)}
+                  onAddToQueue={() => usePlayerStore.getState().addToQueue(song)}
                   onEdit={setEditing}
                   onDelete={deleteOne}
                 />

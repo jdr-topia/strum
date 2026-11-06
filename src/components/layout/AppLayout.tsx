@@ -3,6 +3,9 @@ import { Outlet } from 'react-router-dom';
 import { ProfileMenu } from '@/features/auth/ProfileMenu';
 import { MiniPlayer } from '@/features/player/MiniPlayer';
 import { PlayerBar } from '@/features/player/PlayerBar';
+import { QueuePanel } from '@/features/player/QueuePanel';
+import { usePlayerKeyboard } from '@/features/player/usePlayerKeyboard';
+import { usePlayerLifecycle } from '@/features/player/usePlayerLifecycle';
 import { BottomTabBar } from './BottomTabBar';
 import { Sidebar } from './Sidebar';
 
@@ -11,6 +14,8 @@ import { Sidebar } from './Sidebar';
  * Mobile: slim top bar (logo + account), main, and a mini-player above the bottom tab bar.
  */
 export function AppLayout() {
+  usePlayerLifecycle();
+  usePlayerKeyboard();
   return (
     <div className="flex h-dvh">
       <div className="flex min-h-0 flex-1 md:pb-player">
@@ -30,6 +35,7 @@ export function AppLayout() {
       </div>
       <PlayerBar />
       <MiniPlayer />
+      <QueuePanel />
       <BottomTabBar />
     </div>
   );

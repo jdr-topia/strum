@@ -6,6 +6,11 @@ import { ConfigErrorScreen } from '@/components/ConfigErrorScreen';
 import type { AuthContextValue } from '@/features/auth/AuthContext';
 import { FakeAuthProvider, fakeAuth } from '@/test/fakeAuth';
 
+vi.mock('@/features/player/playerApi', () => ({
+  loadLastQueue: () => Promise.resolve(null),
+  saveLastQueue: () => Promise.resolve(),
+}));
+
 // Keeps Firebase out of this test: the library/upload pages read songs through songApi.
 vi.mock('@/features/library/songApi', () => ({
   subscribeSongs: (_uid: string, _deleted: boolean, onNext: (songs: []) => void) => {
